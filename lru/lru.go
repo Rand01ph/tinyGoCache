@@ -4,7 +4,7 @@ import "container/list"
 
 type Cache struct {
 	maxBytes int64
-	nbytes   int64
+	nBytes   int64
 	// 双向链表
 	ll    *list.List
 	cache map[string]*list.Element
@@ -46,7 +46,7 @@ func (c *Cache) RemoveOldest() {
 		kv := ele.Value.(*entry)
 		delete(c.cache, kv.key)
 		// 更新缓存占用的内存
-		c.nbytes -= int64(len(kv.key)) + int64(kv.value.Len())
+		c.nBytes -= int64(len(kv.key)) + int64(kv.value.Len())
 		if c.OnEvicted != nil {
 			c.OnEvicted(kv.key, kv.value)
 		}
@@ -58,15 +58,15 @@ func (c *Cache) Add(key string, value Value) {
 		// 改
 		c.ll.MoveToFront(ele)
 		kv := ele.Value.(*entry)
-		c.nbytes += int64(value.Len()) - int64(kv.value.Len())
+		c.nBytes += int64(value.Len()) - int64(kv.value.Len())
 		kv.value = value
 	} else {
 		// 增
 		ele := c.ll.PushFront(&entry{key, value})
 		c.cache[key] = ele
-		c.nbytes += int64(len(key)) + int64(value.Len())
+		c.nBytes += int64(len(key)) + int64(value.Len())
 	}
-	for c.maxBytes != 0 && c.maxBytes < c.nbytes {
+	for c.maxBytes != 0 && c.maxBytes < c.nBytes {
 		c.RemoveOldest()
 	}
 }

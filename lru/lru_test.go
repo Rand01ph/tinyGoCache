@@ -22,7 +22,7 @@ func TestCache_Get(t *testing.T) {
 	}
 }
 
-func TestRemoveoldest(t *testing.T) {
+func TestRemoveOldest(t *testing.T) {
 	k1, k2, k3 := "key1", "key2", "k3"
 	v1, v2, v3 := "value1", "value2", "v3"
 	lruCap := len(k1 + k2 + v1 + v2)
