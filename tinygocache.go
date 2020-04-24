@@ -22,7 +22,7 @@ func (f GetterFunc) Get(key string) ([]byte, error) {
 // 核心数据结构
 type Group struct {
 	name      string
-	getter    Getter // 缓存未命中时获取数据源的回调
+	getter    Getter // 缓存未命中时获取源数据的方法
 	mainCache cache  // 并发缓存
 	peers     PeerPicker
 }
