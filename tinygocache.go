@@ -24,6 +24,7 @@ type Group struct {
 	name      string
 	getter    Getter // 缓存未命中时获取数据源的回调
 	mainCache cache  // 并发缓存
+	peers     PeerPicker
 }
 
 var (
@@ -68,7 +69,26 @@ func (g *Group) Get(key string) (ByteView, error) {
 }
 
 func (g *Group) load(key string) (value ByteView, err error) {
+	if g.peers != nil {
+		if peer, ok := g.peers.PickPeer(key); ok {
+			// 从远程节点获取缓存
+			if value, err = g.getFromPeer(peer, key); err == nil {
+				return value, nil
+			}
+			log.Println("[tinyGoCache] Failed to get from peer", err)
+		}
+	}
+	// 从本地节点获取缓存
 	return g.getLocally(key)
+}
+
+// 从对应节点获取缓存
+func (g *Group) getFromPeer(peer PeerGetter, key string) (ByteView, error) {
+	bytes, err := peer.Get(g.name, key)
+	if err != nil {
+		return ByteView{}, err
+	}
+	return ByteView{b: bytes}, nil
 }
 
 func (g *Group) getLocally(key string) (ByteView, error) {
@@ -85,4 +105,12 @@ func (g *Group) getLocally(key string) (ByteView, error) {
 
 func (g *Group) populateCache(key string, value ByteView) {
 	g.mainCache.add(key, value)
+}
+
+// 注册节点选择器
+func (g *Group) RegisterPeers(peers PeerPicker) {
+	if g.peers != nil {
+		panic("RegisterPeerPicker called more than once")
+	}
+	g.peers = peers
 }
